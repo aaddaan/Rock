@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Interactive aerospace education experience"><meta name="theme-color" content="#05080D">
+<title>LVM3 Interactive Launch Vehicle Explorer</title>
+<style>
+:root{--bg:#05080D;--navy:#09121B;--panel:#0D1822;--blue:#2D8CFF;--cy:#57D6FF;--fg:#F4F7FA;--mut:#9BA9B6;--or:#F0A84B;--ln:#1d2c3a;--fast:180ms;--norm:350ms;--focus:650ms;--hero:900ms;--ease:cubic-bezier(.65,0,.35,1);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:Inter,"Segoe UI",system-ui,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;min-height:48px;padding:0 20px;border-radius:3px;border:1px solid #2b3d4f;background:var(--panel);letter-spacing:.12em;text-transform:uppercase;font-size:12px;font-weight:600;transition:border-color var(--fast),transform var(--fast)}
+button:active{transform:translateY(1px)}
+:focus-visible{outline:2px solid var(--cy);outline-offset:3px}
+.b1{background:var(--or);border-color:var(--or);color:var(--bg);min-height:60px;padding:0 40px;font-size:14px}
+.b2{border-color:var(--blue)}.b3{border-color:var(--or);color:var(--or)}
+#app{height:100%;display:flex;flex-direction:column;position:relative;overflow:hidden;background:radial-gradient(110% 90% at 62% 42%,#10263a 0,var(--navy) 46%,var(--bg) 100%)}
+#app::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(1px 1px at 8% 18%,#fff9,transparent),radial-gradient(1px 1px at 27% 74%,#fff7,transparent),radial-gradient(1px 1px at 46% 12%,#fff8,transparent),radial-gradient(1.5px 1.5px at 71% 83%,#fff6,transparent),radial-gradient(1px 1px at 88% 30%,#fff9,transparent),radial-gradient(1px 1px at 93% 62%,#fff6,transparent)}
+header{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 32px;transition:opacity var(--focus),visibility var(--focus)}
+.brand b{display:block;font-size:28px;letter-spacing:.06em}
+.brand span,small{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+#hint{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--cy)}
+nav{display:flex;gap:8px}
+main{position:relative;flex:1;display:flex;min-height:0}
+#stage{position:relative;flex:1;min-width:0}
+#stage::before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(60% 70% at 55% 50%,#000,transparent);mask-image:radial-gradient(60% 70% at 55% 50%,#000,transparent)}
+#svg{position:absolute;inset:0;width:100%;height:100%}
+svg text{fill:var(--fg);font-family:inherit}
+#chips{position:absolute;left:0;right:0;bottom:24px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 16px;transition:opacity var(--focus),visibility var(--focus)}
+.chip{min-height:48px;padding:0 18px;background:rgba(13,24,34,.92);letter-spacing:.14em}
+.chip.act{border-color:var(--or);color:var(--or)}
+.pulse .chip:not([data-go=reset]){animation:pl 2.4s ease-in-out infinite}
+@keyframes pl{50%{border-color:var(--or);box-shadow:0 0 0 4px #f0a84b22}}
+#tag{position:absolute;left:32px;bottom:30px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);max-width:200px;line-height:1.6}
+#panel{flex:none;width:0;overflow:hidden;background:rgba(13,24,34,.96);border-left:1px solid var(--ln);transition:width var(--focus) var(--ease);z-index:3}
+#panel.open{width:min(420px,38vw)}
+#panel>div{width:min(420px,38vw);box-sizing:border-box;height:100%;overflow:auto;padding:28px 32px}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;letter-spacing:.18em;color:var(--mut);text-transform:uppercase}
+#panel h2{font-size:28px;line-height:1.15;margin:14px 0 8px}
+#panel h3{font-size:10px;letter-spacing:.2em;color:var(--or);margin:22px 0 8px;padding-top:14px;border-top:1px solid var(--ln);text-transform:uppercase}
+#panel p,#panel li{font-size:15px;line-height:1.6;color:#cfd8df;margin:0 0 8px}
+#panel .pu{color:var(--fg);font-size:16px}
+#panel ul{padding-left:18px;margin:0}
+.rel{display:flex;flex-wrap:wrap;gap:8px}.rel .chip{min-height:44px;font-size:11px}
+#panel footer{margin-top:24px;font-size:11px;line-height:1.6;color:var(--mut)}
+.sg{cursor:pointer;transition:transform var(--focus) var(--ease),opacity var(--focus) var(--ease),filter var(--norm)}
+.sg.dim{opacity:.14}
+.sg:hover:not(.dim){filter:brightness(1.15)}
+.sg:focus-visible{outline:none;filter:drop-shadow(0 0 4px var(--cy))}
+#m1,#m2{transition:transform var(--focus) var(--ease)}
+.ex #g-pay{transform:translateY(-40px)}.ex #g-c25{transform:translateY(-16px)}.ex #m1{transform:translateX(-36px)}.ex #m2{transform:translateX(36px)}
+.co{pointer-events:none}
+.ld{fill:none;stroke:var(--cy);stroke-width:.9;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset var(--focus) var(--ease)}
+.nd{fill:var(--bg);stroke:var(--or);stroke-width:1.4;opacity:0;transition:opacity var(--norm)}
+.lab{opacity:0;pointer-events:none;cursor:pointer;transition:opacity var(--norm),transform var(--focus) var(--ease)}
+.lab.L{transform:translateX(10px)}.lab.R{transform:translateX(-10px)}
+.on .ld{stroke-dashoffset:0;transition-delay:.25s}
+.on .nd{opacity:1;transition-delay:.25s}
+.on .lab{opacity:1;pointer-events:auto;transform:none;transition-delay:.55s}
+.lab rect{fill:rgba(9,18,27,.92);stroke:#35506a;stroke-width:.8}
+.lab text{font-size:11px;font-weight:600}
+.lab .id{fill:var(--or);font-size:7.5px;letter-spacing:.14em}
+.lab:hover rect,.lab:focus-visible rect{stroke:var(--cy)}
+.lab:focus-visible{outline:none}
+.lab.act rect{stroke:var(--or);fill:rgba(240,168,75,.14)}
+#attract{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:20px;padding:0 8vw;max-width:620px;box-sizing:border-box;pointer-events:none;transition:opacity var(--focus) var(--ease),visibility var(--focus)}
+#attract>*{pointer-events:auto}
+#attract h1{margin:0;font-size:clamp(64px,10vw,128px);line-height:.9;letter-spacing:.02em}
+#attract h2{margin:0;font-size:14px;letter-spacing:.3em;font-weight:500;color:var(--cy);line-height:1.8}
+#attract p{margin:0;font-size:18px;line-height:1.6;color:#cfd8df;max-width:34ch}
+#app:not([data-v=att]) #attract{opacity:0;visibility:hidden}
+#app[data-v=att] header,#app[data-v=att] #chips{opacity:0;visibility:hidden}
+#app[data-v=att] .sg{pointer-events:none}
+#app[data-v=att] #rk{animation:br 8s ease-in-out infinite}
+#app[data-v=att] #scan{animation:sc 6s linear infinite}
+@keyframes br{50%{transform:translateY(-4px)}}
+@keyframes sc{0%{transform:translateY(0);opacity:0}10%,90%{opacity:.7}100%{transform:translateY(520px);opacity:0}}
+@media(max-width:820px){
+header{padding:12px 16px}#hint,#tag{display:none}.brand b{font-size:22px}.brand span{font-size:9px}
+nav button{padding:0 12px;min-height:44px}
+main{flex-direction:column}
+#panel{width:auto;height:0;border-left:0;border-top:1px solid var(--ln);transition:height var(--focus) var(--ease)}
+#panel.open{width:auto;height:52vh}
+#panel>div{width:auto;padding:20px}
+#chips{bottom:12px}
+#attract{justify-content:flex-start;padding:6vh 24px 0;max-width:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important;transition-delay:0s!important}}
+</style></head>
+<body>
+<div id="app" data-v="att">
+<header>
+ <div class="brand"><b>LVM3</b><span>Interactive Launch Vehicle Explorer</span></div>
+ <div id="hint"></div>
+ <nav><button class="b3" id="bk" data-go="back" hidden>Back</button><button class="b2" data-go="over">Start over</button><button class="b3" data-go="home">Home</button></nav>
+</header>
+<main>
+ <div id="stage">
+  <svg id="svg" viewBox="-33 10 1067 600" preserveAspectRatio="xMidYMid meet" role="group" aria-label="LVM3 launch vehicle, conceptual visualization">
+   <defs>
+    <linearGradient id="gm"><stop offset="0" stop-color="#4d5b69"/><stop offset=".38" stop-color="#d3dbe2"/><stop offset=".72" stop-color="#8794a2"/><stop offset="1" stop-color="#36424e"/></linearGradient>
+    <linearGradient id="gw"><stop offset="0" stop-color="#6d7a87"/><stop offset=".4" stop-color="#f1f4f7"/><stop offset=".75" stop-color="#a3afbb"/><stop offset="1" stop-color="#4b5764"/></linearGradient>
+    <linearGradient id="gd"><stop offset="0" stop-color="#2d3640"/><stop offset=".5" stop-color="#7d8996"/><stop offset="1" stop-color="#262e37"/></linearGradient>
+    <g id="motor">
+     <path d="M438 314C438 302 449 293 457 290 465 293 476 302 476 314Z" fill="url(#gw)"/>
+     <rect x="438" y="314" width="38" height="232" fill="url(#gw)"/>
+     <path d="M438 330H476M438 440H476M438 520H476" stroke="#0a1118" stroke-opacity=".3"/>
+     <rect x="453" y="334" width="8" height="196" fill="#c9843a" fill-opacity=".55"/>
+     <rect x="440" y="500" width="12" height="28" fill="url(#gd)"/>
+     <path d="M447 546H467L474 566H440Z" fill="url(#gd)"/>
+    </g>
+   </defs>
+   <g fill="none" stroke="#57D6FF" stroke-opacity=".09" stroke-dasharray="2 7"><ellipse cx="500" cy="330" rx="470" ry="250" transform="rotate(-18 500 330)"/><ellipse cx="500" cy="330" rx="600" ry="320" transform="rotate(-18 500 330)"/></g>
+   <rect id="scan" x="440" y="48" width="120" height="1.2" fill="#57D6FF" opacity="0"/>
+   <g id="rk">
+    <g id="g-pay" class="sg" data-go="stage:pay" tabindex="0" role="button" aria-label="Payload and encapsulated assembly">
+     <path d="M470 215V150C470 104 488 66 500 48 512 66 530 104 530 150V215Z" fill="url(#gw)"/>
+     <path d="M470 100H530M470 150H530" stroke="#0a1118" stroke-opacity=".25"/>
+     <rect x="482" y="156" width="36" height="52" fill="#0b141d" stroke="#3b4856" stroke-width=".8"/>
+     <rect x="490" y="166" width="20" height="32" fill="#c9a45a"/><rect x="478" y="172" width="12" height="8" fill="#2D8CFF" fill-opacity=".7"/><rect x="510" y="172" width="12" height="8" fill="#2D8CFF" fill-opacity=".7"/>
+     <rect x="476" y="215" width="48" height="13" fill="#4f5b68"/>
+     <g id="co-pay"></g>
+    </g>
+    <g id="g-c25" class="sg" data-go="stage:c25" tabindex="0" role="button" aria-label="C25 cryogenic upper stage">
+     <rect x="476" y="228" width="48" height="112" fill="url(#gm)"/>
+     <rect x="480" y="234" width="40" height="56" rx="8" fill="#0b141d" fill-opacity=".35" stroke="#0a1118" stroke-opacity=".4"/>
+     <rect x="480" y="296" width="40" height="38" rx="8" fill="#0b141d" fill-opacity=".35" stroke="#0a1118" stroke-opacity=".4"/>
+     <rect x="474" y="340" width="52" height="12" fill="#5d6a77"/>
+     <path d="M492 330H508L514 352H486Z" fill="url(#gd)"/>
+     <g id="co-c25"></g>
+    </g>
+    <g id="g-l110" class="sg" data-go="stage:l110" tabindex="0" role="button" aria-label="L110 liquid core stage">
+     <rect x="476" y="352" width="48" height="176" fill="url(#gm)"/>
+     <path d="M476 364H524M476 372H524M476 424H524M476 480H524M476 518H524" stroke="#0a1118" stroke-opacity=".28"/>
+     <rect x="497" y="484" width="6" height="40" fill="#c9843a" fill-opacity=".6"/>
+     <path d="M482 528H494L498 556H478ZM506 528H518L522 556H502Z" fill="url(#gd)"/>
+     <g id="co-l110"></g>
+    </g>
+    <g id="g-s200" class="sg" data-go="stage:s200" tabindex="0" role="button" aria-label="S200 solid strap-on motors">
+     <g id="m2"><use href="#motor" x="86"/></g>
+     <g id="m1"><use href="#motor"/><g id="co-s200"></g></g>
+    </g>
+   </g>
+  </svg>
+  <div id="chips"></div>
+  <div id="tag">Conceptual visualization. Concept demonstration, not an official ISRO product.</div>
+ </div>
+ <aside id="panel" aria-live="polite" aria-label="Component details"></aside>
+</main>
+<section id="attract" aria-label="Welcome">
+ <small>Space Explorer, current module</small>
+ <h1>LVM3</h1>
+ <h2>INTERACTIVE<br>LAUNCH VEHICLE EXPLORER</h2>
+ <p>Explore the vehicle section by section.</p>
+ <button class="b1" data-go="over">Start exploring</button>
+ <small>Interactive Concept Demonstration</small>
+</section>
+</div>
+<script>
+const IDLE_MS=90000,SRC='ISRO LVM3 launch vehicle documentation (isro.gov.in)';
+const $=s=>document.querySelector(s),app=$('#app'),svg=$('#svg'),chips=$('#chips'),panel=$('#panel'),hint=$('#hint'),bk=$('#bk');
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+// stage: [code, name, camera target [cx, cy, minW, minH]]
+const ST={s200:['S200','Solid Strap-on Motors',[500,418,600,337]],l110:['L110','Liquid Core Stage',[500,450,500,281]],c25:['C25','Cryogenic Upper Stage',[500,285,460,259]],pay:['PAYLOAD','Payload and Encapsulated Assembly',[500,98,460,259]]};
+// component: [id, stage, name, purpose, does, facts, role, related, anchorX, anchorY, labelSide, labelY]
+const C=[
+['ign','s200','Pyro Igniter','Starts the solid motor burn.','A pyrotechnic igniter at the forward end of the motor lights the propellant surface. Combustion then spreads along the core channel.',['Located at the head end of the motor','Fires at lift-off to begin first-phase thrust'],'Begins the vehicle’s boost phase.',['core','noz'],457,306,'l',305],
+['core','s200','Solid Propellant Core','Stores and burns the solid fuel.','Solid propellant is cast inside the motor case around a central channel. Once lit, it burns steadily outward and produces high-pressure gas.',['Designation S200: roughly 200-tonne-class propellant load','Cannot be throttled or shut off once ignited'],'Supplies most of the thrust during the first minutes of flight.',['ign','noz'],457,410,'l',400],
+['fnc','s200','Flex Nozzle Control','Steers the vehicle by tilting the nozzle.','Hydraulic actuators, supplied from an oil reservoir, swivel the flexible nozzle by small angles. The redirected thrust steers the vehicle.',['FNC stands for Flex Nozzle Control','Provides thrust-vector steering during boost'],'Keeps the boosters on course while they burn.',['noz','core'],446,518,'l',490],
+['noz','s200','Exhaust Nozzle','Turns hot gas into thrust.','The bell-shaped nozzle accelerates combustion gas to supersonic speed. The momentum of that exhaust pushes the vehicle upward.',['Mounted on a flexible joint','Nozzle shape shown is illustrative'],'The last step of the thrust path in each booster.',['fnc','core'],457,556,'l',556],
+['ox','l110','Oxidizer Tank','Holds the oxidizer.','The oxidizer is stored in its own tank and kept apart from the fuel until both reach the engine combustion chambers.',['L110 uses storable liquid propellants','Tank arrangement shown is conceptual'],'Supplies one half of the propellant pair to the Vikas engines.',['fuel','feed'],500,396,'r',392],
+['fuel','l110','Fuel Tank','Holds the liquid fuel.','The fuel tank stores the liquid fuel and delivers it to the engines at a steady rate for the whole burn.',['Separate from the oxidizer tank','Designation L110: roughly 110-tonne-class propellant load'],'Supplies the second half of the propellant pair.',['ox','feed'],500,452,'r',448],
+['feed','l110','Propellant Feed Line','Carries propellant to the engines.','Piping routes fuel and oxidizer from the tanks to the engines, connecting storage to propulsion.',['Links the tanks to the engines','Routing shown is conceptual'],'Connects storage to propulsion.',['ox','vik'],500,502,'r',504],
+['vik','l110','Vikas Engines','Two liquid engines power the core stage.','The Vikas engines burn the two propellants together to produce thrust for the core stage.',['L110 carries two Vikas engines','Ignited in flight while the S200 motors are still burning'],'Main thrust source once the strap-ons burn out.',['feed','ox'],488,542,'l',548],
+['lh2','c25','Liquid Hydrogen Tank','Stores fuel at cryogenic temperature.','Hydrogen is held as a liquid at extremely low temperature. This is why the stage is called cryogenic.',['Needs far colder storage than liquid oxygen','Fuel for the CE-20 engine'],'Provides fuel for the upper-stage burn.',['lox','ce20'],500,262,'r',258],
+['lox','c25','Liquid Oxygen Tank','Stores the oxidizer at cryogenic temperature.','Oxygen is stored as a cold liquid and combined with hydrogen inside the engine.',['Colder than ambient, but warmer than liquid hydrogen','Oxidizer for the CE-20 engine'],'Provides oxidizer for the upper-stage burn.',['lh2','ce20'],500,314,'l',300],
+['ce20','c25','CE-20 Engine','India’s cryogenic engine for LVM3.','The CE-20 burns liquid hydrogen with liquid oxygen. This propellant pair gives high exhaust speed, well suited to the final push toward orbit.',['Burns LH2 with LOX','Ignites after the L110 stage has separated'],'Delivers the final velocity needed for the target orbit.',['lh2','lox'],500,346,'r',342],
+['pay','pay','Payload','What the vehicle carries.','The satellite or spacecraft rides at the top of the stack, protected inside the fairing until the vehicle is above most of the atmosphere.',['Shown here as a generic spacecraft','Target orbit depends on the mission'],'The reason the whole vehicle exists.',['adp','fair'],500,184,'r',165],
+['adp','pay','Payload Adapter and Equipment Bay','Connects the payload to the vehicle.','The adapter joins the spacecraft to the upper stage and releases it at the end of the flight. The equipment bay houses vehicle avionics.',['Separation interface for the payload','Avionics are housed in the equipment bay'],'The link between payload and upper stage.',['pay','fair'],500,222,'l',225],
+['fair','pay','Payload Fairing','Protects the payload during ascent.','The fairing shields the spacecraft from aerodynamic loads and heating, then splits away once the vehicle is high enough.',['LVM3 uses a 5 m-class diameter fairing','Jettisoned during the upper part of the ascent'],'The protective shell of the encapsulated assembly.',['pay','adp'],518,108,'r',100]
+];
+const CM=Object.fromEntries(C.map(c=>[c[0],c]));
+
+const wrap=n=>{if(n.length<=16)return[n];const w=n.split(' ');let b=1,d=99;for(let i=1;i<w.length;i++){const x=Math.abs(w.slice(0,i).join(' ').length-w.slice(i).join(' ').length);if(x<d){d=x;b=i}}return[w.slice(0,b).join(' '),w.slice(b).join(' ')]};
+const callouts=sid=>C.filter(c=>c[1]==sid).map((c,i)=>{const[id,,name,,,,,,ax,ay,sd,ly]=c,L=sd=='l',e=L?425:575,x=L?285:575,ex=e+(L?14:-14);
+ return`<g class="co"><path class="ld" pathLength="1" d="M${ax} ${ay}L${ex} ${ly}L${e} ${ly}"/><circle class="nd" cx="${ax}" cy="${ay}" r="3.5"/><g class="lab ${L?'L':'R'}" id="l-${id}" data-go="comp:${id}" tabindex="0" role="button" aria-label="${name}"><rect x="${x}" y="${ly-22}" width="140" height="44" rx="2"/><text class="id" x="${x+8}" y="${ly-9}">${ST[sid][0]}-0${i+1}</text>${wrap(name).map((t,k)=>`<text x="${x+8}" y="${ly+4+k*13}">${t}</text>`).join('')}</g></g>`}).join('');
+const ph=c=>`<div><div class="ph"><span>${ST[c[1]][1]}</span><button class="b2" data-go="back">Close</button></div><h2>${c[2]}</h2><p class="pu">${c[3]}</p><h3>What it does</h3><p>${c[4]}</p><h3>Key facts</h3><ul>${c[5].map(f=>`<li>${f}</li>`).join('')}</ul><h3>Role in the vehicle</h3><p>${c[6]}</p><h3>Related</h3><div class="rel">${c[7].map(r=>`<button class="chip" data-go="comp:${r}">${CM[r][2]}</button>`).join('')}</div><footer>Source: ${SRC}. Conceptual visualization: graphics are illustrative, not engineering drawings. Figures to be verified against ISRO material before exhibition use.</footer></div>`;
+
+// camera: eased viewBox interpolation, re-fits to the container aspect
+let cur=null,T=[360,310,1000,600],raf,busy=false;
+function cam(t,imm){T=t;const r=$('#stage').getBoundingClientRect();if(!r.width||!r.height)return;
+ const a=r.width/r.height,nar=innerWidth<=820,mw=nar?(t[2]>999?420:Math.min(t[2],480)):t[2],w=Math.max(mw,t[3]*a),h=w/a,to=[t[0]-w/2,t[1]-h/2,w,h];
+ cancelAnimationFrame(raf);busy=false;
+ if(imm||!cur||RM){cur=to;svg.setAttribute('viewBox',to.join(' '));return}
+ const from=cur.slice(),t0=performance.now();busy=true;
+ const f=n=>{let p=Math.max(0,Math.min(1,(n-t0)/900));p=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;cur=from.map((v,i)=>v+(to[i]-v)*p);svg.setAttribute('viewBox',cur.join(' '));if(p<1)raf=requestAnimationFrame(f);else{busy=false;cam(T,true)}};
+ raf=requestAnimationFrame(f)}
+new ResizeObserver(()=>{if(!busy)cam(T,true)}).observe($('#stage'));
+
+// state: att (attract) | over (overview) | stage | comp
+let S={v:'att'},first=true;
+function render(){const v=S.v,s=S.s;
+ app.dataset.v=v;svg.classList.toggle('ex',!!s);
+ document.querySelectorAll('.sg').forEach(g=>{g.classList.toggle('on',g.id=='g-'+s);g.classList.toggle('dim',!!s&&g.id!='g-'+s)});
+ document.querySelectorAll('.lab').forEach(l=>l.classList.toggle('act',l.id=='l-'+S.c));
+ document.querySelectorAll('#chips [data-k]').forEach(b=>b.classList.toggle('act',b.dataset.k==s));
+ chips.classList.toggle('pulse',first&&v=='over');
+ bk.hidden=v=='att'||v=='over';
+ hint.textContent=v=='over'?'Tap a stage to explore':v=='stage'?'Select a component':v=='comp'?ST[s][1]:'';
+ const c=S.c&&CM[S.c];panel.classList.toggle('open',!!c);if(c)panel.innerHTML=ph(c);
+ cam(v=='att'?[innerWidth<=820?500:360,310,1000,600]:v=='over'?[500,310,1000,600]:ST[s][2])}
+function go(a){const[t,v]=a.split(':');
+ if(t=='home')S={v:'att'};
+ else if(t=='over')S={v:'over'};
+ else if(t=='back')S=S.v=='comp'?{v:'stage',s:S.s}:S.v=='stage'?{v:'over'}:S;
+ else if(t=='stage'){S={v:'stage',s:v};first=false}
+ else if(t=='comp'){S={v:'comp',s:CM[v][1],c:v};first=false}
+ render()}
+
+for(const k in ST)$('#co-'+k).innerHTML=callouts(k);
+chips.innerHTML=Object.entries(ST).map(([k,v])=>`<button class="chip" data-go="stage:${k}" data-k="${k}">${v[0]}</button>`).join('')+'<button class="chip" data-go="reset">Reset view</button>';
+document.addEventListener('click',e=>{const t=e.target.closest('[data-go]');if(t)go(t.dataset.go)});
+addEventListener('keydown',e=>{const k=e.key;
+ if(k=='Escape')go('back');else if(k=='r'||k=='R')go('reset');else if(k=='Home')go('home');
+ else if((k=='Enter'||k==' ')&&e.target.matches&&e.target.matches('[data-go]:not(button)')){e.preventDefault();go(e.target.dataset.go)}});
+// kiosk idle reset: return to the attract screen after IDLE_MS without input
+let idle;const bump=()=>{clearTimeout(idle);idle=setTimeout(()=>{if(S.v!='att')go('home')},IDLE_MS)};
+['pointerdown','keydown'].forEach(e=>addEventListener(e,bump,{passive:true}));
+render();bump();
+</script>
+</body></html>
